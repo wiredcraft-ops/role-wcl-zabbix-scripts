@@ -1,0 +1,34 @@
+---
+#
+# Task file for deploying zabbix custom scripts to proper location.
+#
+
+- name: Copy each zabbix custom script config files to correct location.
+  copy:
+    src={{ item }}
+    dest=/usr/lib/zabbix/conf/
+    owner=root
+    mode=755
+  with_fileglob:
+    - zabbix-scripts/conf/*
+  notify: restart zabbix-agent
+
+- name: Copy each zabbix custom script to correct location.
+  copy:
+    src={{ item }}
+    dest=/usr/lib/zabbix/scripts/
+    owner=root
+    mode=755
+  with_fileglob:
+    - zabbix-scripts/scripts/*
+  notify: restart zabbix-agent
+
+- name: Copy zabbix_agentd.d configuration files to correct location.
+  copy: 
+    src={{ item }}
+    dest=/etc/zabbix/zabbix_agentd.d/
+    backup=yes
+  with_fileglob:
+    - zabbix-scripts/zabbix_agentd.d/*
+  notify: restart zabbix-agent
+

@@ -1,0 +1,28 @@
+---
+# tasks file for zabbix-scripts
+- name: Create folder to store Zabbix alert scripts
+  file:
+    path=/usr/lib/zabbix/alertscripts/
+    state=directory
+    mode=0755
+    owner=zabbix
+    group=zabbix
+
+- name: Copy Zabbix alert script
+  template:
+      src=slack_zabbix.py.j2
+      dest=/usr/lib/zabbix/alertscripts/slack_{{ item.name }}.py
+      mode=0755
+      owner=root
+      group=root
+  with_items:
+    wcl_slack_webhooks
+  notify: restart zabbix-server
+
+- name: Create Zabbix log folder
+  file:
+    path=/var/log/zabbix
+    state=directory
+    mode=0755
+    owner=zabbix
+    group=zabbix

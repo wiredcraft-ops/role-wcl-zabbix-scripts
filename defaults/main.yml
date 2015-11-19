@@ -1,0 +1,9 @@
+---
+wcl_slack_webhooks: []
+# Format:
+# wcl_slack_webhooks: []
+#   - name: script-name
+#     slack_url: http://url.for.slack.webhook
+
+zabbix_scripts: 
+  - agent

@@ -1,0 +1,6 @@
+---
+- include: server.yml
+  when: '"server" in zabbix_scripts'
+
+- include: agent.yml
+  when: '"agent" in zabbix_scripts'
