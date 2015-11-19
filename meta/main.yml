@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  name: role-wcl-zabbix-scripts
+  author: Wiredcraft
+  description: deployment steps install custom zabbix scripts.
+  company: Wiredcraft
+  license: MIT
+  min_ansible_version: 1.9
+  platforms:
+  - name: Ubuntu
+    versions:
+    - all
+  - name: CentOS
+  versions:
+    - all
+  galaxy_tags:
+    - wcl
