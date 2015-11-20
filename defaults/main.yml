@@ -18,4 +18,6 @@ zabbix_prefix_dir: /usr/lib/zabbix
 #
 # Zabbix scripts custom paramaters:
 #
-zabbix_apache_url: http://localhost:80/server-status?auto
+zabbix_apache:
+    url: http://localhost:80/server-status?auto
+    apachectl: /usr/sbin/apachectl

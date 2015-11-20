@@ -22,9 +22,9 @@ ZBX_REQ_DATA="$1"
 ZBX_REQ_DATA_URL="$2"
 
 # Apache defaults
-APACHE_STATS_DEFAULT_URL="{{ zabbix_apache_url }}"
+APACHE_STATS_DEFAULT_URL="{{ zabbix_apache.url }}"
 WGET_BIN="/usr/bin/wget"
-APACHECTL_BIN="/usr/sbin/apachectl"
+APACHECTL_BIN="{{ zabbix_apache.apachectl }}"
 
 # Include config replacing the defaults.
 if [ -f "../conf/apache.conf" ]; then
