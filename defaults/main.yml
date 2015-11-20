@@ -13,7 +13,7 @@ zabbix_scripts:
 
 
 zabbix_conf_dir: /etc/zabbix/
-zabbix_prefix_dir: /usr/lib/zabbix/
+zabbix_prefix_dir: /usr/lib/zabbix
 
 #
 # Zabbix scripts custom paramaters:
