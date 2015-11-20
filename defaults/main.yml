@@ -12,7 +12,7 @@ zabbix_scripts:
   - agent
 
 
-zabbix_conf_dir: /etc/zabbix/
+zabbix_conf_dir: /etc/zabbix
 zabbix_prefix_dir: /usr/lib/zabbix
 
 #

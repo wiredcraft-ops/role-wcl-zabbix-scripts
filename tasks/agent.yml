@@ -16,34 +16,33 @@
 - name: Copy Zabbix custom scripts
   template:
     src={{ item }}
-    dest={{ zabbix_prefix_dir }}/scripts
+    dest={{ zabbix_prefix_dir }}/scripts/{{ item | basename | regex_replace('.j2','') }}
     owner=root
     group=root
     mode=0755
   with_fileglob:
-    - scripts/*
+    - templates/scripts/*
   notify: restart zabbix-agent
 
 - name: Copy Zabbix custom scripts config files
   template:
     src={{ item }}
-    dest={{ zabbix_prefix_dir }}/conf
+    dest={{ zabbix_prefix_dir }}/conf/{{ item | basename | regex_replace('.j2','') }}
     owner=root
     group=root
     mode=0755
-    force=no
   with_fileglob:
-    - conf/*
+    - templates/conf/*
   notify: restart zabbix-agent
 
 - name: Copy Zabbix config file for UserParameters
   template:
     src={{ item }}
-    dest={{ zabbix_conf_dir }}/zabbix-agentd.d/
+    dest={{ zabbix_conf_dir }}/zabbix_agentd.d/{{ item | basename | regex_replace('.j2','') }}
     owner=root
     group=root
     mode=0755
   with_fileglob:
-    - zabbix-agentd.d/*
+    - templates/zabbix-agentd.d/*
   notify: restart zabbix-agent
 
