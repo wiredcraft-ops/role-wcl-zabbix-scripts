@@ -5,8 +5,17 @@ wcl_slack_webhooks: []
 #   - name: script-name
 #     slack_url: http://url.for.slack.webhook
 
-zabbix_scripts_repo: https://github.com/wiredcraft-ops/zabbix-scripts.git
-zabbix_scripts_clone_dest: /opt/wcl/zabbix-scripts
+# zabbix_scripts_repo: https://github.com/wiredcraft-ops/zabbix-scripts.git
+# zabbix_scripts_clone_dest: /opt/wcl/zabbix-scripts
 
 zabbix_scripts: 
   - agent
+
+
+zabbix_conf_dir: /etc/zabbix/
+zabbix_prefix_dir: /usr/lib/zabbix/
+
+#
+# Zabbix scripts custom paramaters:
+#
+zabbix_apache_url: http://localhost:80/server-status?auto

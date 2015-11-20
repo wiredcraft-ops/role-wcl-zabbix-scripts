@@ -3,53 +3,47 @@
 # Task file for deploying zabbix custom scripts to proper location.
 #
 
-- name: Git clone zabbix scripts to /opt/wcl/zabbix-scripts/
-  git:
-    repo={{ zabbix_scripts_repo }}
-    dest={{ zabbix_scripts_clone_dest }}
-    version=master
-    update=yes
-  notify: restart zabbix-agent
-
-- name: Create /usr/lib/zabbix folder
+- name: Create Zabbix folders
   file:
-    path=/usr/lib/zabbix
+    path={{ item }}
     owner=root
     mode=0755
     state=directory
+  with_items:
+    - {{ zabbix_prefix_dir }}/scripts
+    - {{ zabbix_prefix_dir }}/conf
 
-- name: Create symlink to /usr/lib/zabbix/conf
-  file:
-    src={{ zabbix_scripts_clone_dest }}/conf
-    path=/usr/lib/zabbix/conf
-    state=link
+- name: Copy Zabbix custom scripts
+  template:
+    src={{ item }}
+    dest={{ zabbix_prefix_dir }}/scripts
     owner=root
-    mode=755
+    group=root
+    mode=0755
+  with_fileglob:
+    - scripts/*
   notify: restart zabbix-agent
 
-- name: Create symlink to /usr/lib/zabbix/scripts/
-  file:
-    src={{ zabbix_scripts_clone_dest }}/scripts
-    path=/usr/lib/zabbix/scripts
-    state=link
+- name: Copy Zabbix custom scripts config files
+  template:
+    src={{ item }}
+    dest={{ zabbix_prefix_dir }}/conf
     owner=root
-    mode=755
+    group=root
+    mode=0755
+    force=no
+  with_fileglob:
+    - conf/*
   notify: restart zabbix-agent
 
-- name: Copy zabbix config files to /etc/zabbix/zabbix_agentd.d
-  shell: cp {{ zabbix_scripts_clone_dest }}/zabbix_agentd.d/* /etc/zabbix/zabbix_agentd.d/
+- name: Copy Zabbix config file for UserParameters
+  template:
+    src={{ item }}
+    dest={{ zabbix_conf_dir }}/zabbix-agentd.d/
+    owner=root
+    group=root
+    mode=0755
+  with_fileglob:
+    - zabbix-agentd.d/*
   notify: restart zabbix-agent
 
-# It was supposed to be like the following code,
-# but ansible seems having bug checking folder checksum, which failed.
-# related error message is:
-# "attempted to take checksum of directory"
-
-#  copy:
-#    src={{ zabbix_scripts_clone_dest }}/zabbix_agentd.d/
-#    dest=/etc/zabbix/zabbix_agentd.d
-#    owner=root
-#    mode=755
-#    backup=yes
-#    remote_src=yes
-#  notify: restart zabbix-agent
