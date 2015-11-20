@@ -10,8 +10,8 @@
     mode=0755
     state=directory
   with_items:
-    - {{ zabbix_prefix_dir }}/scripts
-    - {{ zabbix_prefix_dir }}/conf
+    - "{{ zabbix_prefix_dir }}/scripts"
+    - "{{ zabbix_prefix_dir }}/conf"
 
 - name: Copy Zabbix custom scripts
   template:
