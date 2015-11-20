@@ -11,6 +11,13 @@
     update=yes
   notify: restart zabbix-agent
 
+- name: Create /usr/lib/zabbix folder
+  file:
+    path=/usr/lib/zabbix
+    owner=root
+    mode=0755
+    state=directory
+
 - name: Create symlink to /usr/lib/zabbix/conf
   file:
     src={{ zabbix_scripts_clone_dest }}/conf
