@@ -1,3 +1,0 @@
-[submodule "files/zabbix-scripts"]
-	path = files/zabbix-scripts
-	url = https://github.com/wiredcraft-ops/zabbix-scripts.git
