@@ -5,5 +5,8 @@ wcl_slack_webhooks: []
 #   - name: script-name
 #     slack_url: http://url.for.slack.webhook
 
+zabbix_scripts_repo: https://github.com/wiredcraft-ops/zabbix-scripts.git
+zabbix_scripts_clone_dest: /opt/wcl/zabbix-scripts
+
 zabbix_scripts: 
   - agent

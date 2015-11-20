@@ -3,32 +3,46 @@
 # Task file for deploying zabbix custom scripts to proper location.
 #
 
-- name: Copy each zabbix custom script config files to correct location.
-  copy:
-    src={{ item }}
-    dest=/usr/lib/zabbix/conf/
+- name: Git clone zabbix scripts to /opt/wcl/zabbix-scripts/
+  git:
+    repo={{ zabbix_scripts_repo }}
+    dest={{ zabbix_scripts_clone_dest }}
+    version=master
+    update=yes
+  notify: restart zabbix-agent
+
+- name: Create symlink to /usr/lib/zabbix/conf
+  file:
+    src={{ zabbix_scripts_clone_dest }}/conf
+    path=/usr/lib/zabbix/conf
+    state=link
     owner=root
     mode=755
-  with_fileglob:
-    - zabbix-scripts/conf/*
   notify: restart zabbix-agent
 
-- name: Copy each zabbix custom script to correct location.
-  copy:
-    src={{ item }}
-    dest=/usr/lib/zabbix/scripts/
+- name: Create symlink to /usr/lib/zabbix/scripts/
+  file:
+    src={{ zabbix_scripts_clone_dest }}/scripts
+    path=/usr/lib/zabbix/scripts
+    state=link
     owner=root
     mode=755
-  with_fileglob:
-    - zabbix-scripts/scripts/*
   notify: restart zabbix-agent
 
-- name: Copy zabbix_agentd.d configuration files to correct location.
-  copy: 
-    src={{ item }}
-    dest=/etc/zabbix/zabbix_agentd.d/
-    backup=yes
-  with_fileglob:
-    - zabbix-scripts/zabbix_agentd.d/*
+- name: Copy zabbix config files to /etc/zabbix/zabbix_agentd.d
+  shell: cp {{ zabbix_scripts_clone_dest }}/zabbix_agentd.d/* /etc/zabbix/zabbix_agentd.d/
   notify: restart zabbix-agent
 
+# It was supposed to be like the following code,
+# but ansible seems having bug checking folder checksum, which failed.
+# related error message is:
+# "attempted to take checksum of directory"
+
+#  copy:
+#    src={{ zabbix_scripts_clone_dest }}/zabbix_agentd.d/
+#    dest=/etc/zabbix/zabbix_agentd.d
+#    owner=root
+#    mode=755
+#    backup=yes
+#    remote_src=yes
+#  notify: restart zabbix-agent
