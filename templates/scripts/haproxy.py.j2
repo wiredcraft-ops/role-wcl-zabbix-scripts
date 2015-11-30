@@ -1,0 +1,120 @@
+#!/usr/bin/env python
+########################
+# Zabbix HaProxy script
+#
+# Supports:
+#  - items discovery (hurray)
+#  - info
+#  - stats
+########################
+# ChangeLog:
+#  20151129 VV <vincent@wiredcraft.com> initial creation
+########################
+
+import os
+import sys
+import json
+import socket
+
+# TODO: auto-discover (based on ps aux / config file)
+SOCKET = '{{ zabbix_haproxy.stats_socket }}'
+
+class Client(object):
+    """docstring for Client"""
+    def __init__(self, unix_socket):
+        super(Client, self).__init__()
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(unix_socket)
+
+    def _read(self, command):
+        '''
+        Send the command and retrieve the response
+        '''
+        resp = ''
+        self.sock.sendall(command +'\n')
+        while True:
+            data = self.sock.recv(16)
+            resp += data
+            if not data: break
+        return resp
+
+    def get_info(self):
+        info = {}
+        data = self._read('show info')
+        for d in data.splitlines():
+            if d.startswith('#'): continue
+            if d.strip() == '': break
+            k = d.split(':', 1)[0].lower()
+            v = d.split(':', 1)[1].strip()
+            info.update({k: v})
+        return info
+
+    def get_stats(self):
+        return self._read('show stat')
+
+    def __del__(self):
+        self.sock.close()
+
+def discovery_items(client):
+    '''
+    Provided with a client, get all the items for 
+    '''
+    stats = client.get_stats()
+    result = {"data": []}
+    for stat in stats.splitlines():
+        if stat.startswith('#'): continue
+        if stat.strip() == '': break
+        parsed_stats = stat.split(',')
+        result['data'].append({
+            "{#PXNAME}": parsed_stats[0], 
+            "{#SVNAME}": parsed_stats[1]
+        })
+    return result        
+
+def stat_item(client, pxname, svname, item):
+    '''
+    Provided with a client, get all the items for 
+    '''
+    data = []
+    stats = client.get_stats()
+    for stat in stats.splitlines():
+        if stat.startswith('#') or \
+           stat.startswith(pxname +','+ svname +','):
+            data.append(stat.split(','))
+
+    for k, v in zip(*data):
+        if k == item: return v
+
+def info_item(client, item):
+    '''
+    Provided with a client, get all the items for 
+    '''
+    info = client.get_info()
+    return info.get(item.lower())
+
+def main():
+    # Handle discovery
+    item_type = sys.argv[1]
+
+    client = Client(SOCKET)
+
+    if item_type == 'discovery':
+        items = discovery_items(client)
+        sys.stdout.write(json.dumps(items))
+    elif item_type == 'info':
+        name = sys.argv[2]
+        sys.stdout.write(info_item(client, name))
+    elif item_type == 'stat':
+        pxname = sys.argv[2]
+        svname = sys.argv[3]
+        name = sys.argv[4]
+        sys.stdout.write(stat_item(client, pxname, svname, name))
+    else:
+        raise RuntimeError('Invalid item type')
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        # TODO - write logs in zabbix agent logs
+        sys.stderr.write(str(e))
