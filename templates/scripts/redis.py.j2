@@ -1,0 +1,135 @@
+import socket
+import sys
+
+
+BUFFER_SIZE = 500
+REDIS_HOST = "{{ zabbix_redis.host }}"
+REDIS_PORT = "{{ zabbix_redis.port }}"
+
+
+# Sample redis info formatted as dictionary
+# Pass one of the keys below as argument when
+# running this script
+
+# Example: python redis.py tcp_port
+
+# {
+# 'aof_current_rewrite_time_sec': '-1',
+# 'aof_enabled': '0',
+# 'aof_last_bgrewrite_status': 'ok',
+# 'aof_last_rewrite_time_sec': '-1',
+# 'aof_last_write_status': 'ok',
+# 'aof_rewrite_in_progress': '0',
+# 'aof_rewrite_scheduled': '0',
+# 'arch_bits': '64',
+# 'blocked_clients': '0',
+# 'client_biggest_input_buf': '0',
+# 'client_longest_output_list': '0',
+# 'cluster_enabled': '0',
+# 'config_file': '/etc/redis/6379.conf',
+# 'connected_clients': '2',
+# 'connected_slaves': '0',
+# 'evicted_keys': '0',
+# 'expired_keys': '0',
+# 'gcc_version': '4.8.4',
+# 'hz': '10',
+# 'instantaneous_input_kbps': '0.00',
+# 'instantaneous_ops_per_sec': '0',
+# 'instantaneous_output_kbps': '0.00',
+# 'keyspace_hits': '0',
+# 'keyspace_misses': '0',
+# 'latest_fork_usec': '1207',
+# 'loading': '0',
+# 'lru_clock': '7234749',
+# 'master_repl_offset': '0',
+# 'mem_allocator': 'jemalloc-3.6.0',
+# 'mem_fragmentation_ratio': '9.24',
+# 'migrate_cached_sockets': '0',
+# 'multiplexing_api': 'epoll',
+# 'os': 'Linux 3.13.0-67-generic x86_64',
+# 'process_id': '8547',
+# 'pubsub_channels': '0',
+# 'pubsub_patterns': '0',
+# 'rdb_bgsave_in_progress': '0',
+# 'rdb_changes_since_last_save': '0',
+# 'rdb_current_bgsave_time_sec': '-1',
+# 'rdb_last_bgsave_status': 'ok',
+# 'rdb_last_bgsave_time_sec': '0',
+# 'rdb_last_save_time': '1450068938',
+# 'redis_build_id': '8d8904e778c5987c',
+# 'redis_git_dirty': '0',
+# 'redis_git_sha1': '00000000',
+# 'redis_mode': 'standalone',
+# 'redis_version': '3.0.5',
+# 'rejected_connections': '0',
+# 'repl_backlog_active': '0',
+# 'repl_backlog_first_byte_offset': '0',
+# 'repl_backlog_histlen': '0',
+# 'repl_backlog_size': '1048576',
+# 'role': 'master',
+# 'run_id': '3d3b0837b956468dfdf117249479ea5b86d9a20b',
+# 'sync_full': '0',
+# 'sync_partial_err': '0',
+# 'sync_partial_ok': '0',
+# 'tcp_port': '6379',
+# 'total_commands_processed': '87',
+# 'total_connections_received': '86',
+# 'total_net_input_bytes': '611',
+# 'total_net_output_bytes': '161511',
+# 'uptime_in_days': '0',
+# 'uptime_in_seconds': '7339',
+# 'used_cpu_sys': '10.68',
+# 'used_cpu_sys_children': '0.00',
+# 'used_cpu_user': '4.78',
+# 'used_cpu_user_children': '0.00',
+# 'used_memory': '835848',
+# 'used_memory_human': '816.26K',
+# 'used_memory_lua': '36864',
+# 'used_memory_peak': '836872',
+# 'used_memory_peak_human': '817.26K',
+# 'used_memory_rss': '7720960'}
+
+
+def read_redis_info(host, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
+    s.sendall("INFO\r\n")
+    content = ""
+    length_str = ""
+    while True:
+        data = s.recv(1)
+        length_str += data
+        if data == "\r" and s.recv(1) == "\n":
+            length = int(length_str[1:-1]) + 2  # including /r/n
+            break
+
+    while True:
+        data = s.recv(BUFFER_SIZE)
+        length -= len(data)
+        content += data
+        if length <= 0:
+            break
+
+    return content
+
+
+def parse_redis_info(content):
+    parsed_content = dict()
+    lines = content.split("\r\n")
+    for line in lines:
+        if line == "" or line.startswith("#"):
+            continue
+
+        key, value = line.split(":")
+        parsed_content[key] = value
+
+    return parsed_content
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        content = read_redis_info(REDIS_HOST, int(REDIS_PORT))
+        result = parse_redis_info(content)
+        if arg in result.keys():
+            print(result[arg])
