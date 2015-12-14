@@ -24,3 +24,6 @@ zabbix_apache:
 
 zabbix_haproxy:
     stats_socket: /tmp/haproxy.zabbix
+
+zabbix_nginx:
+    url: http://localhost:80/nginx_status
