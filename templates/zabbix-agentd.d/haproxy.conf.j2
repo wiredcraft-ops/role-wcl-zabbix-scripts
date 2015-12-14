@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+UserParameter=haproxy.discovery,    python {{ zabbix_prefix_dir }}/scripts/haproxy.py discovery
+UserParameter=haproxy[*],           python {{ zabbix_prefix_dir }}/scripts/haproxy.py "$1" "$2" "$3" "$4"

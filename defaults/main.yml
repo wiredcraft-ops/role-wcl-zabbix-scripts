@@ -21,3 +21,6 @@ zabbix_prefix_dir: /usr/lib/zabbix
 zabbix_apache:
     url: http://localhost:80/server-status?auto
     apachectl: /usr/sbin/apachectl
+
+zabbix_haproxy:
+    stats_socket: /tmp/haproxy.zabbix
