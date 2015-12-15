@@ -1,0 +1,95 @@
+import json
+import os
+import subprocess
+import sys
+
+
+HOST = "{{ zabbix_php_fpm.host }}"
+PORT = "{{ zabbix_php_fpm.port }}"
+
+os.environ['SCRIPT_NAME'] = "/status"
+os.environ['SCRIPT_FILENAME'] = "/status"
+os.environ['QUERY_STRING'] = "full&json"
+os.environ['REQUEST_METHOD'] = "GET"
+
+env = dict(os.environ)
+
+
+# Sample PHP-FPM status page formatted as json
+
+# {u'accepted conn': 115,
+#  u'active processes': 1,
+#  u'idle processes': 1,
+#  u'listen queue': 0,
+#  u'listen queue len': 32768,
+#  u'max active processes': 1,
+#  u'max children reached': 0,
+#  u'max listen queue': 0,
+#  u'pool': u'www.starbucks.com.cn',
+#  u'process manager': u'dynamic',
+#  u'processes': [{u'content length': 0,
+#                  u'last request cpu': 0.0,
+#                  u'last request memory': 0,
+#                  u'pid': 22288,
+#                  u'request duration': 128,
+#                  u'request method': u'GET',
+#                  u'request uri': u'/status?full&json',
+#                  u'requests': 58,
+#                  u'script': u'-',
+#                  u'start since': 62958,
+#                  u'start time': 1450082840,
+#                  u'state': u'Running',
+#                  u'user': u'-'},
+#                 {u'content length': 0,
+#                  u'last request cpu': 0.0,
+#                  u'last request memory': 262144,
+#                  u'pid': 22289,
+#                  u'request duration': 131,
+#                  u'request method': u'GET',
+#                  u'request uri': u'/status?full&json',
+#                  u'requests': 57,
+#                  u'script': u'-',
+#                  u'start since': 62958,
+#                  u'start time': 1450082840,
+#                  u'state': u'Idle',
+#                  u'user': u'-'}],
+#  u'slow requests': 0,
+#  u'start since': 62958,
+#  u'start time': 1450082840,
+#  u'total processes': 2}
+
+
+def read_php_fpm_status(host, port):
+    host_port_string = "{host}:{port}".format(
+        host=host,
+        port=port,
+    )
+
+    p = subprocess.Popen(
+        ['cgi-fcgi', '-bind', '-connect', host_port_string],
+        env=env,
+        stdout=subprocess.PIPE
+    )
+    out, err = p.communicate()
+
+    if err:
+        return
+
+    result = out.split("\r\n\r\n")
+
+    if len(result) == 2:
+        try:
+            return json.loads(result[1])
+        except (ValueError, TypeError):
+            return
+
+    return
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        result = read_php_fpm_status(HOST, PORT)
+        if result and arg in result.keys():
+            print(result[arg])
