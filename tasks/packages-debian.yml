@@ -1,0 +1,7 @@
+---
+- name: Add required binaries
+  apt:
+    name={{ item }}
+    state=present
+  with_items:
+    "{{ packages_debian }}"

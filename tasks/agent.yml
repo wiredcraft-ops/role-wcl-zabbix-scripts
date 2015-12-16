@@ -46,3 +46,4 @@
     - templates/zabbix-agentd.d/*
   notify: restart zabbix-agent
 
+- include: install-packages.yml

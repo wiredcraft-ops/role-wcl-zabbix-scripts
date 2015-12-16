@@ -1,0 +1,13 @@
+---
+- name: Enable EPEL repository
+  yum:
+    name=epel-release
+    state=present
+
+- name: Add required binaries
+  yum:
+    name={{ item }}
+    state=present
+  with_items:
+    "{{ packages_redhat }}"
+
