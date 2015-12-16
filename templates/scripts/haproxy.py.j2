@@ -66,8 +66,8 @@ def discovery_items(client):
         if stat.strip() == '': break
         parsed_stats = stat.split(',')
         result['data'].append({
-            "{#PXNAME}": parsed_stats[0], 
-            "{#SVNAME}": parsed_stats[1]
+            "{" "#PXNAME}": parsed_stats[0],  # split the string for avoiding jinja comment start tag
+            "{" "#SVNAME}": parsed_stats[1]
         })
     return result        
 
