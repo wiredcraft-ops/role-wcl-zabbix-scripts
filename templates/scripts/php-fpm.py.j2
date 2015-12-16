@@ -92,4 +92,4 @@ if __name__ == '__main__':
         arg = sys.argv[1]
         result = read_php_fpm_status(HOST, PORT)
         if result and arg in result.keys():
-            print(result[arg])
+            print(json.dumps(result[arg]))
