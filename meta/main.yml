@@ -15,3 +15,5 @@ galaxy_info:
     - all
   galaxy_tags:
     - wcl
+dependencies:
+  - { role: wcl-zabbix-agent }
