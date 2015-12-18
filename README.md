@@ -30,12 +30,14 @@ None
 
 Example Playbook
 ----------------
-
-Just include role wcl-zabbix-scripts to the playbook.
+Before you use wcl-zabbix-scripts, you need to have zabbix-agent in place,
+then include role wcl-zabbix-scripts to the playbook.
 
     - hosts: all
       sudo: true
       roles:
+        - role: wcl-zabbix-agent
+          agent_server: "127.0.0.1"
         - role: wcl-zabbix-scripts
 
 License
