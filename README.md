@@ -8,6 +8,16 @@ Requirements
 
 zabbix-agent should be working before deploying this role to make custom scripts work.
 
+Add the following lines to requirements.yml in your project.
+
+- src: https://github.com/wiredcraft-ops/role-wcl-zabbix-scripts.git
+  name: wcl-zabbix-scripts
+  version: master
+
+- src: https://github.com/wiredcraft-ops/role-wcl-zabbix-agent.git
+  name: wcl-zabbix-agent
+  version: master
+
 Role Variables
 --------------
 
