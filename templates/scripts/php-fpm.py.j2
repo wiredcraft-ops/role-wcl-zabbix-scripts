@@ -1,3 +1,11 @@
+#
+# {{ ansible_managed }}
+#
+# This script get php-fpm status page by directly communicating
+# through fastcgi protocal using fcgi tool.
+#
+# author: Song
+
 import json
 import os
 import subprocess
@@ -16,6 +24,7 @@ env = dict(os.environ)
 
 
 # Sample PHP-FPM status page formatted as json
+# Example: python php-fpm.py "accepted conn"
 
 # {u'accepted conn': 115,
 #  u'active processes': 1,
