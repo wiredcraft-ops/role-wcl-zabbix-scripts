@@ -108,6 +108,7 @@ REDIS_PORT = "{{ zabbix_redis.port }}"
 # This function first tries to find the length, then read the conent.
 
 def read_redis_info(host, port):
+    """ Get redis status info by sending "INFO ALL" to socket. """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
     s.sendall("INFO ALL\r\n")
@@ -131,6 +132,7 @@ def read_redis_info(host, port):
 
 
 def parse_redis_info(content):
+    """ Parse the redis info we get. """
     parsed_content = dict()
     lines = content.split("\r\n")
     for line in lines:
