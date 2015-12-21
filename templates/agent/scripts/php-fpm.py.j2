@@ -15,6 +15,7 @@ import sys
 HOST = "{{ zabbix_php_fpm.host }}"
 PORT = "{{ zabbix_php_fpm.port }}"
 
+# Environment variables are read by cgi-fcgi as input arguments.
 os.environ['SCRIPT_NAME'] = "/status"
 os.environ['SCRIPT_FILENAME'] = "/status"
 os.environ['QUERY_STRING'] = "full&json"
@@ -83,6 +84,10 @@ def read_php_fpm_status(host, port):
 
     if err:
         return
+
+    # out is the response from php-fpm server, it consists of two parts:
+    # HTTP header and content, result[0] is HTTP header, result[1] is the content
+    # which can be decoded as json object.
 
     result = out.split("\r\n\r\n")
 
