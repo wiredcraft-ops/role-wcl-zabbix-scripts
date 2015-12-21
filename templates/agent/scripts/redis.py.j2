@@ -12,7 +12,7 @@ import socket
 import sys
 
 
-BUFFER_SIZE = 500
+BUFFER_SIZE = 512
 REDIS_HOST = "{{ zabbix_redis.host }}"
 REDIS_PORT = "{{ zabbix_redis.port }}"
 
@@ -100,10 +100,17 @@ REDIS_PORT = "{{ zabbix_redis.port }}"
 # 'used_memory_rss': '7720960'}
 
 
+# Read redis protocol specification about "RESP Bulk Strings"
+# http://redis.io/topics/protocol
+#
+# For example, the returned string from redis "foobar" is encoded as like this:
+# "$6\r\nfoobar\r\n", 6 is the length of the content.
+# This function first tries to find the length, then read the conent.
+
 def read_redis_info(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    s.sendall("INFO\r\n")
+    s.sendall("INFO ALL\r\n")
     content = ""
     length_str = ""
     while True:
