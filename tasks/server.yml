@@ -10,7 +10,7 @@
 
 - name: Copy Zabbix alert script
   template:
-      src=slack_zabbix.py.j2
+      src=server/alertscripts/slack_zabbix.py.j2
       dest=/usr/lib/zabbix/alertscripts/slack_{{ item.name }}.py
       mode=0755
       owner=root

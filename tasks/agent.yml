@@ -21,7 +21,7 @@
     group=root
     mode=0755
   with_fileglob:
-    - templates/scripts/*
+    - templates/agent/scripts/*
   notify: restart zabbix-agent
 
 - name: Copy Zabbix custom scripts config files
@@ -32,7 +32,7 @@
     group=root
     mode=0755
   with_fileglob:
-    - templates/conf/*
+    - templates/agent/conf/*
   notify: restart zabbix-agent
 
 - name: Copy Zabbix config file for UserParameters
@@ -43,7 +43,7 @@
     group=root
     mode=0755
   with_fileglob:
-    - templates/zabbix-agentd.d/*
+    - templates/agent/zabbix-agentd.d/*
   notify: restart zabbix-agent
 
 - include: install-packages.yml
