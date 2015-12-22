@@ -10,16 +10,24 @@ import json
 import os
 import subprocess
 import sys
+from distutils.spawn import find_executable
 
 
 HOST = "{{ zabbix_php_fpm.host }}"
 PORT = "{{ zabbix_php_fpm.port }}"
+SOCKET = "{{ zabbix_php_fpm.socket }}"  # Optional unix:/var/run/php5-fpm.sock
+STATUS_URI = "{{ zabbix_php_fpm.status_uri }}"
 
 # Environment variables are read by cgi-fcgi as input arguments.
+# The following are default config
 os.environ['SCRIPT_NAME'] = "/status"
 os.environ['SCRIPT_FILENAME'] = "/status"
 os.environ['QUERY_STRING'] = "full&json"
 os.environ['REQUEST_METHOD'] = "GET"
+
+if STATUS_URI:
+    os.environ['SCRIPT_NAME'] = STATUS_URI
+    os.environ['SCRIPT_FILENAME'] = STATUS_URI
 
 env = dict(os.environ)
 
@@ -75,19 +83,27 @@ def read_php_fpm_status(host, port):
         port=port,
     )
 
-    p = subprocess.Popen(
+    if not find_executable("cgi-fcgi"):
+        raise Exception("cgi-fcgi can not be found.")
+
+    child = subprocess.Popen(
         ['cgi-fcgi', '-bind', '-connect', host_port_string],
         env=env,
         stdout=subprocess.PIPE
     )
-    out, err = p.communicate()
+
+    out, err = child.communicate()
 
     if err:
-        return
+        raise Exception(err)
 
-    # out is the response from php-fpm server, it consists of two parts:
+    return_code = child.returncode
+    if return_code != 0:
+        raise Exception("cgi-fcgi return code is not 0: %s" % return_code)
+
+    # "out" is the response from php-fpm server, it consists of two parts:
     # HTTP header and content, result[0] is HTTP header, result[1] is the content
-    # which can be decoded as json object.
+    # which can be decoded as json object. They can be split by \r\n\r\n.
 
     result = out.split("\r\n\r\n")
 
@@ -102,8 +118,18 @@ def read_php_fpm_status(host, port):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) == 2:
+    if len(sys.argv) != 2:
+        print "Argument not provided."
+    else:
         arg = sys.argv[1]
-        result = read_php_fpm_status(HOST, PORT)
+        try:
+            result = read_php_fpm_status(HOST, PORT)
+        except Exception as e:
+            print "Unexpected Error: %s" % e
+            exit(1)
+
         if result and arg in result.keys():
             print(json.dumps(result[arg]))
+        else:
+            print("The key %s cannot be found" % arg)
+            exit(1)
