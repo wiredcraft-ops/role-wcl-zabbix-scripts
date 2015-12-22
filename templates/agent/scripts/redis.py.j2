@@ -138,6 +138,7 @@ def read_redis_info(host, port):
                     break
                 else:
                     error_msg += character
+            s.close()
             raise RedisError(error_msg)
 
     s.sendall("INFO ALL\r\n" )
@@ -148,6 +149,7 @@ def read_redis_info(host, port):
         msg += data
         if data == "\r" and s.recv(1) == "\n":
             if msg[0] == "-":  # if "-" is the first char we receive, then the msg is error
+                s.close()
                 raise RedisError(msg)
             length = int(msg[1:-1]) + 2  # including /r/n
             break
@@ -159,6 +161,7 @@ def read_redis_info(host, port):
         if length <= 0:
             break
 
+    s.close()
     return content
 
 
