@@ -146,9 +146,27 @@ def parse_redis_info(content):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
+
+    if len(sys.argv) != 2:
+        print "argument not provided."
+        exit(1)
+    else:
         arg = sys.argv[1]
-        content = read_redis_info(REDIS_HOST, int(REDIS_PORT))
+
+        try:
+            content = read_redis_info(REDIS_HOST, int(REDIS_PORT))
+        except socket.error as e:
+            print "%s" % e
+            exit(1)
+
         result = parse_redis_info(content)
+
+        if not result:
+            print "Cannot find any key / value pair from redis INFO command."
+            exit(1)
+
         if arg in result.keys():
             print(result[arg])
+        else:
+            print("Key (%s) cannot be found." % arg)
+            exit(1)
