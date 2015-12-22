@@ -15,6 +15,7 @@ import sys
 BUFFER_SIZE = 512
 REDIS_HOST = "{{ zabbix_redis.host }}"
 REDIS_PORT = "{{ zabbix_redis.port }}"
+REDIS_PASSWORD = "{{ zabbix_redis.password }}"
 
 
 # Sample redis info formatted as dictionary
@@ -123,28 +124,32 @@ def read_redis_info(host, port):
     # then, tries to get first three characters responeded from redis
     # if it is "+OK", then read the trailing \r\n
     # if not, read the rest of the message, and raise that message as error.
-    s.sendall("AUTH %s\r\n" % REDIS_PASSWORD)
-    msg = s.recv(3)
-    if msg == "+OK":
-        s.recv(2)  # Read \r\n
-    else:
-        error_msg = msg
-        while True:
-            character = s.recv(1)
-            if character == "\r" and s.recv(1) == "\n":
-                break
-            else:
-                error_msg += character
-        raise RedisError(error_msg)
+
+    if REDIS_PASSWORD:
+        s.sendall("AUTH %s\r\n" % REDIS_PASSWORD)
+        msg = s.recv(3)
+        if msg == "+OK":
+            s.recv(2)  # Read \r\n
+        else:
+            error_msg = msg
+            while True:
+                character = s.recv(1)
+                if character == "\r" and s.recv(1) == "\n":
+                    break
+                else:
+                    error_msg += character
+            raise RedisError(error_msg)
 
     s.sendall("INFO ALL\r\n" )
     content = ""
-    length_str = ""
+    msg = ""
     while True:
         data = s.recv(1)
-        length_str += data
+        msg += data
         if data == "\r" and s.recv(1) == "\n":
-            length = int(length_str[1:-1]) + 2  # including /r/n
+            if msg[0] == "-":  # if "-" is the first char we receive, then the msg is error
+                raise RedisError(msg)
+            length = int(msg[1:-1]) + 2  # including /r/n
             break
 
     while True:
