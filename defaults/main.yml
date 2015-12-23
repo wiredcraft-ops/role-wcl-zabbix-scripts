@@ -31,10 +31,13 @@ zabbix_nginx:
 zabbix_redis:
     host: 127.0.0.1
     port: 6379
+    password: ""
 
 zabbix_php_fpm:
     host: 127.0.0.1
     port: 9000
+    socket: ""
+    status_uri: "/status"
 
 install_packages: False
 
