@@ -27,6 +27,8 @@ zabbix_haproxy:
 
 zabbix_nginx:
     url: http://localhost:80/nginx_status
+    nginxctl: /usr/sbin/nginx
+
 
 zabbix_redis:
     host: 127.0.0.1

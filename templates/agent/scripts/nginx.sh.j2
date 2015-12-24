@@ -21,6 +21,7 @@ ZBX_REQ_DATA_URL="$2"
 # Nginx defaults
 NGINX_STATUS_DEFAULT_URL="{{ zabbix_nginx.url }}"
 WGET_BIN="/usr/bin/wget"
+NGINXCTL_BIN="{{ zabbix_nginx.nginxctl }}"
 
 
 # Include config replacing the defaults.
@@ -59,6 +60,7 @@ fi
 # Extract data from nginx stats
 #
 case $ZBX_REQ_DATA in
+  version)              $NGINXCTL_BIN -v 2>&1 | awk '{print $3}';;
   active_connections)   echo "$NGINX_STATS" | head -1             | cut -f3 -d' ';;
   accepted_connections) echo "$NGINX_STATS" | grep -Ev '[a-zA-Z]' | cut -f2 -d' ';;
   handled_connections)  echo "$NGINX_STATS" | grep -Ev '[a-zA-Z]' | cut -f3 -d' ';;
