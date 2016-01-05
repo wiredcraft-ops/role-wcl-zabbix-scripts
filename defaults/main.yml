@@ -23,7 +23,7 @@ zabbix_apache:
     apachectl: /usr/sbin/apachectl
 
 zabbix_haproxy:
-    stats_socket: /tmp/haproxy.zabbix
+    stats_socket: /tmp/haproxy
 
 zabbix_nginx:
     url: http://localhost:80/nginx_status
