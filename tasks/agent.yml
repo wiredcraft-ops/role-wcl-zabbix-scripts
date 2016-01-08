@@ -12,6 +12,7 @@
   with_items:
     - "{{ zabbix_prefix_dir }}/scripts"
     - "{{ zabbix_prefix_dir }}/conf"
+    - "{{ zabbix_prefix_dir }}/conf/check_header.conf.d"
 
 - name: Copy Zabbix custom scripts
   template:
@@ -34,6 +35,16 @@
   with_fileglob:
     - templates/agent/conf/*
   notify: restart zabbix-agent
+
+- name: Copy Zabbix check_header.conf.d scripts config files
+  template:
+    src={{ item }}
+    dest={{ zabbix_prefix_dir }}/conf/check_header.conf.d/{{ item | basename | regex_replace('.j2','') }}
+    owner=root
+    group=root
+    mode=0755
+  with_fileglob:
+    - templates/agent/conf/check_header.conf.d/*
 
 - name: Copy Zabbix config file for UserParameters
   template:

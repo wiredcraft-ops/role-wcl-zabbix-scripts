@@ -1,0 +1,153 @@
+#
+# {{ ansible_managed }}
+#
+# author: Song
+
+import json
+import os
+import re
+import subprocess
+import sys
+from distutils.spawn import find_executable
+from urlparse import urlparse
+
+"""
+Get http header by providing:
+- Required:
+  - url (with port)
+  - header_key: the key you care about in headers
+
+- Optional:
+  - post_data
+  - ip
+  - username
+  - password
+
+Usage:
+  python check_header.py check_header_cookie.conf
+"""
+
+
+def get_http_header(
+    url, header_key,
+    post_data=None, ip=None, username=None, password=None
+):
+    """
+    Example:
+    curl -u username:pass --resolve hostname.com:443:127.0.0.1 hostname.com -i
+    """
+    if not find_executable("curl"):
+        raise Exception("curl can not be found.")
+
+    if url.port:
+        port = url.port
+    else:
+        if url.scheme == "https":
+            port = 443
+        else:
+            port = 80
+
+    command_string = ['curl']
+
+    if username and password:
+        command_string.extend([
+            '-u',
+            '%s:%s' % (username, password),
+        ])
+
+    if ip:
+        command_string.extend([
+            '--resolve',
+            '%s:%s:%s' % (url.hostname, port, ip),
+        ])
+
+    if post_data:
+        command_string.extend([
+            '--data',
+            post_data,
+        ])
+
+    command_string.extend([url.geturl(), '-i'])
+
+    child = subprocess.Popen(
+        command_string,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    out, err = child.communicate()
+
+    if not out:
+        print "ERROR: Unexpected Error: %s" % err
+        exit(1)
+
+    # "\r\n\r\n" is the HTTP standard separating HTTP headers and the body.
+    # "\r\n" is the HTTP standard separating HTTP header lines.
+    header, body = out.split("\r\n\r\n")
+    header_lines = header.split("\r\n")
+
+    wanted_headers = []
+    for header in header_lines:
+        filtered = re.search(header_key, header)
+        if filtered:
+            # Sample set cookie line:
+            # "Set-Cookie: PHPSESSID=hs2ktu1jsjo6i73pm87moh1vp5; path=/"
+
+            # if regular expression pattern use groups, then output groups
+            # else output matched string.
+            if filtered.groups():
+                wanted_headers.append(str(filtered.groups()))
+            else:
+                wanted_headers.append(filtered.group())
+
+    return wanted_headers
+
+
+if __name__ == "__main__":
+
+    if len(sys.argv) != 2:
+        print "ERROR: Arguments are not enough."
+        exit(1)
+
+    args = {}
+
+    with open("{{ zabbix_prefix_dir }}/conf/check_header.conf.d/%s" % sys.argv[1]) as config_file:
+        args = json.loads(config_file.read())
+
+    # Check validity of args.
+    if not args.get('url'):
+        print "ERROR: url is not provided"
+        exit(1)
+
+    if not args.get('header_key'):
+        print "ERROR: header_key is not provided."
+        exit(1)
+
+    if not args.get('post_data'):
+        args['post_data'] = None
+
+    if not args.get('ip'):
+        args['ip'] = None
+
+    if not args.get('username') or not args.get('password'):
+        args['username'] = None
+        args['password'] = None
+
+    url = urlparse(args['url'])
+
+    result = get_http_header(
+        url=url,
+        header_key=args['header_key'],
+        post_data=args['post_data'],
+        ip=args['ip'],
+        username=args['username'],
+        password=args['password'],
+    )
+
+    if not result:
+        print "ERROR: Header not found: %s" % args['header_key']
+        exit(1)
+
+    for item in result:
+        print item
