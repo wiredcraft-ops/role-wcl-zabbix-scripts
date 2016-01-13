@@ -13,10 +13,11 @@ import sys
 from distutils.spawn import find_executable
 
 
-HOST = "{{ zabbix_php_fpm.host }}"
-PORT = "{{ zabbix_php_fpm.port }}"
-SOCKET = "{{ zabbix_php_fpm.socket }}"  # Optional example: "/var/run/php5-fpm.sock"
-STATUS_URI = "{{ zabbix_php_fpm.status_uri }}"
+HOST = "{{ zabbix_php_fpm.host | default('') }}"
+PORT = "{{ zabbix_php_fpm.port | default('') }}"
+SOCKET = "{{ zabbix_php_fpm.socket | default('') }}"  # Optional example: "/var/run/php5-fpm.sock"
+
+STATUS_URI = "{{ zabbix_php_fpm.status_uri | default('')}}"
 
 # Environment variables are read by cgi-fcgi as input arguments.
 # The following are default config
