@@ -36,16 +36,6 @@
     - templates/agent/conf/*
   notify: restart zabbix-agent
 
-# - name: Copy Zabbix check_header.conf.d scripts config files
-#   template:
-#     src={{ item }}
-#     dest={{ zabbix_prefix_dir }}/conf/check_header.conf.d/{{ item | basename | regex_replace('.j2','') }}
-#     owner=root
-#     group=root
-#     mode=0755
-#   with_fileglob:
-#     - templates/agent/conf/check_header.conf.d/*
-
 - name: Generate predefined config for check_header
   copy:
     content={{ item.content | to_json }}
