@@ -12,6 +12,7 @@
   with_items:
     - "{{ zabbix_prefix_dir }}/scripts"
     - "{{ zabbix_prefix_dir }}/conf"
+    - "{{ zabbix_prefix_dir }}/conf/check_header.conf.d"
 
 - name: Copy Zabbix custom scripts
   template:
@@ -34,6 +35,12 @@
   with_fileglob:
     - templates/agent/conf/*
   notify: restart zabbix-agent
+
+- name: Generate predefined config for check_header
+  copy:
+    content={{ item.content | to_json }}
+    dest={{ zabbix_prefix_dir }}/conf/check_header.conf.d/{{ item.filename }}
+  with_items: "{{ check_header_config_list }}"
 
 - name: Copy Zabbix config file for UserParameters
   template:
