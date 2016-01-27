@@ -49,9 +49,10 @@ packages_redhat:
 packages_debian:
     - libfcgi0ldbl
 
-check_header_config_list:
-    - filename: check_cookie.conf
-      content:
-        url: https://www.google.com.hk
-        ip: 127.0.0.1
-        header_key: '^Set-Cookie[\w\W]+'
+check_header_config_list: []
+# Example config list
+#     - filename: check_cookie.conf
+#       content:
+#         url: https://www.google.com.hk
+#         ip: 127.0.0.1
+#         header_key: '^Set-Cookie[\w\W]+'
