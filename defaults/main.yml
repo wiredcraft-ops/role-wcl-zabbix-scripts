@@ -35,6 +35,11 @@ zabbix_redis:
     port: 6379
     password: ""
 
+zabbix_redis_sentinel:
+    host: 127.0.0.1
+    port: 26379
+    password: ""
+
 zabbix_php_fpm:
     host: 127.0.0.1
     port: 9000
