@@ -173,7 +173,7 @@ def parse_redis_info(content):
         if line == "" or line.startswith("#"):
             continue
 
-        key, value = line.split(":")
+        key, value = line.split(":", 1)
         parsed_content[key] = value
 
     return parsed_content
