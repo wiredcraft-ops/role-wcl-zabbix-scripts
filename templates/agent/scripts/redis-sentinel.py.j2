@@ -63,7 +63,7 @@ class RedisError(Exception):
 # "$6\r\nfoobar\r\n", 6 is the length of the content.
 # This function first tries to find the length, then read the content.
 
-def read_redis_info(host, port):
+def issue_command(host, port, command):
     """ Get redis status info by sending 'INFO ALL' to socket. """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
@@ -90,7 +90,7 @@ def read_redis_info(host, port):
             s.close()
             raise RedisError(error_msg)
 
-    s.sendall("INFO ALL\r\n" )
+    s.sendall("%s\r\n" % command)
     content = ""
     msg = ""
     while True:
@@ -122,10 +122,44 @@ def parse_redis_info(content):
         if line == "" or line.startswith("#"):
             continue
 
-        key, value = line.split(":")
+        key, value = line.split(":", 1)
         parsed_content[key] = value
 
+
     return parsed_content
+
+
+def parse_masters_info(parsed_content):
+    master_names = []
+    result = []
+
+    for key, value in parsed_content.iteritems():
+        # get master name from line like the following:
+        # master0:name=master01,status=sdown,address=192.168.1.92:6379,slaves=2,sentinels=3
+        if key.startswith("master"):
+            segments = value.split(",")
+            for segment in segments:
+                subkey, subvalue = segment.split("=")
+                if subkey == "name":
+                    master_names.append(subvalue)
+
+    # Handle masters info.
+    if master_names:
+        for master_name in master_names:
+            info_dict = {}
+            content = issue_command(
+                REDIS_SENTINEL_HOST,
+                int(REDIS_SENTINEL_PORT),
+                "SENTINEL master %s" % master_name,
+            )
+            # Example content.split("\r\n")
+            # ['$4', 'name', '$8', 'master01', '$2', 'ip', '$12', '192.168.1.92', '$4', 'port', '$4', '6379']
+            segments = content.split("\r\n")[1::2]
+            for key, value in zip(segments[::2], segments[1::2]):
+                info_dict[key] = value
+            result.append(info_dict)
+
+    return result
 
 
 if __name__ == '__main__':
@@ -137,7 +171,7 @@ if __name__ == '__main__':
         arg = sys.argv[1]
 
         try:
-            content = read_redis_info(REDIS_SENTINEL_HOST, int(REDIS_SENTINEL_PORT))
+            content = issue_command(REDIS_SENTINEL_HOST, int(REDIS_SENTINEL_PORT), "INFO")
         except socket.error as e:
             print "Socket Error: %s" % e
             exit(1)
@@ -148,14 +182,19 @@ if __name__ == '__main__':
             print "Unexpected Error: %s" % e
             exit(1)
 
-        result = parse_redis_info(content)
+        redis_info = parse_redis_info(content)
+        result = parse_masters_info(redis_info)
 
         if not result:
-            print "Cannot find any key / value pair from redis INFO command."
+            print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
             exit(1)
 
-        if arg in result.keys():
-            print(result[arg])
+        if len(result) > 1:
+            print "Multiple master servers are found: %s" % result
+            exit(0)
+
+        if arg in result[0].keys():
+            print(result[0][arg])
         else:
             print("Key (%s) cannot be found." % arg)
             exit(1)
