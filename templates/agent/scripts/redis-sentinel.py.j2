@@ -5,7 +5,8 @@
 # through socket
 #
 # author: Song
-
+# Check Wiki explaining this script
+# https://github.com/wiredcraft-ops/role-wcl-zabbix-scripts/wiki/Redis-Sentinel-Monitoring-Items
 
 
 import socket
@@ -164,11 +165,12 @@ def parse_masters_info(parsed_content):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         print "argument not provided."
         exit(1)
     else:
-        arg = sys.argv[1]
+        cmd = sys.argv[1]
+        arg = sys.argv[2]
 
         try:
             content = issue_command(REDIS_SENTINEL_HOST, int(REDIS_SENTINEL_PORT), "INFO")
@@ -183,18 +185,36 @@ if __name__ == '__main__':
             exit(1)
 
         redis_info = parse_redis_info(content)
-        result = parse_masters_info(redis_info)
 
-        if not result:
-            print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
-            exit(1)
+        if cmd == "info":
+            if not redis_info:
+                print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
+                exit(1)
 
-        if len(result) > 1:
-            print "Multiple master servers are found: %s" % result
-            exit(0)
+            if arg in redis_info:
+                print redis_info[arg]
+                exit(0)
+            else:
+                print("Key (%s) cannot be found." % arg)
+                exit(1)
 
-        if arg in result[0].keys():
-            print(result[0][arg])
+        elif cmd == "master":
+            result = parse_masters_info(redis_info)
+
+            if not result:
+                print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
+                exit(1)
+
+            if len(result) > 1:
+                print "Multiple master servers are found: %s" % result
+                exit(0)
+
+            if arg in result[0].keys():
+                print(result[0][arg])
+            else:
+                print("Key (%s) cannot be found." % arg)
+                exit(1)
+
         else:
-            print("Key (%s) cannot be found." % arg)
+            print "Only support master / info command."
             exit(1)
