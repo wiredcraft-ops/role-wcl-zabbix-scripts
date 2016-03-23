@@ -1,0 +1,220 @@
+#
+# {{ ansible_managed }}
+#
+# This script get redis status by querying with INFO command
+# through socket
+#
+# author: Song
+# Check Wiki explaining this script
+# https://github.com/wiredcraft-ops/role-wcl-zabbix-scripts/wiki/Redis-Sentinel-Monitoring-Items
+
+
+import socket
+import sys
+
+
+BUFFER_SIZE = 512
+REDIS_SENTINEL_HOST = "{{ zabbix_redis_sentinel.host }}"
+REDIS_SENTINEL_PORT = "{{ zabbix_redis_sentinel.port }}"
+REDIS_SENTINEL_PASSWORD = "{{ zabbix_redis_sentinel.password }}"
+
+
+# Sample redis-sentinel info formatted as dictionary
+# Pass one of the keys below as argument when
+# running this script
+
+# Example: python redis-sentinel.py tcp_port
+
+# # Server
+# redis_version:3.0.7
+# redis_git_sha1:00000000
+# redis_git_dirty:0
+# redis_build_id:efeedaf9ded0622e
+# redis_mode:sentinel
+# os:Linux 3.10.0-229.20.1.el7.x86_64 x86_64
+# arch_bits:64
+# multiplexing_api:epoll
+# gcc_version:4.8.5
+# process_id:866
+# run_id:b835d52fa179eacda50f07a3a2cd9cf1dcd601cb
+# tcp_port:26379
+# uptime_in_seconds:1322
+# uptime_in_days:0
+# hz:15
+# lru_clock:15271375
+# config_file:/etc/redis/sentinel_26379.conf
+#
+# # Sentinel
+# sentinel_masters:1
+# sentinel_tilt:0
+# sentinel_running_scripts:0
+# sentinel_scripts_queue_length:0
+# master0:name=master01,status=sdown,address=192.168.1.92:6379,slaves=2,sentinels=3
+
+
+class RedisError(Exception):
+    pass
+
+# The response of INFO command is formatted as "RESP Bulk Strings"
+
+# Read redis protocol specification about "RESP Bulk Strings"
+# http://redis.io/topics/protocol
+
+# For example, the returned string from redis "foobar" is encoded as like this:
+# "$6\r\nfoobar\r\n", 6 is the length of the content.
+# This function first tries to find the length, then read the content.
+
+def issue_command(host, port, command):
+    """ Get redis status info by sending 'INFO ALL' to socket. """
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
+
+    # Validate redis password
+    # First, sending AUTH password
+    # then, tries to get first three characters responeded from redis
+    # if it is "+OK", then read the trailing \r\n
+    # if not, read the rest of the message, and raise that message as error.
+
+    if REDIS_SENTINEL_PASSWORD:
+        s.sendall("AUTH %s\r\n" % REDIS_SENTINEL_PASSWORD)
+        msg = s.recv(3)
+        if msg == "+OK":
+            s.recv(2)  # Read \r\n
+        else:
+            error_msg = msg
+            while True:
+                character = s.recv(1)
+                if character == "\r" and s.recv(1) == "\n":
+                    break
+                else:
+                    error_msg += character
+            s.close()
+            raise RedisError(error_msg)
+
+    s.sendall("%s\r\n" % command)
+    content = ""
+    msg = ""
+    while True:
+        data = s.recv(1)
+        msg += data
+        if data == "\r" and s.recv(1) == "\n":
+            if msg[0] == "-":  # if "-" is the first char we receive, then the msg is error
+                s.close()
+                raise RedisError(msg)
+            length = int(msg[1:-1]) + 2  # including /r/n
+            break
+
+    while True:
+        data = s.recv(BUFFER_SIZE)
+        length -= len(data)
+        content += data
+        if length <= 0:
+            break
+
+    s.close()
+    return content
+
+
+def parse_redis_info(content):
+    """ Parse the redis info we get. """
+    parsed_content = dict()
+    lines = content.split("\r\n")
+    for line in lines:
+        if line == "" or line.startswith("#"):
+            continue
+
+        key, value = line.split(":", 1)
+        parsed_content[key] = value
+
+
+    return parsed_content
+
+
+def parse_masters_info(parsed_content):
+    master_names = []
+    result = []
+
+    for key, value in parsed_content.iteritems():
+        # get master name from line like the following:
+        # master0:name=master01,status=sdown,address=192.168.1.92:6379,slaves=2,sentinels=3
+        if key.startswith("master"):
+            segments = value.split(",")
+            for segment in segments:
+                subkey, subvalue = segment.split("=")
+                if subkey == "name":
+                    master_names.append(subvalue)
+
+    # Handle masters info.
+    if master_names:
+        for master_name in master_names:
+            info_dict = {}
+            content = issue_command(
+                REDIS_SENTINEL_HOST,
+                int(REDIS_SENTINEL_PORT),
+                "SENTINEL master %s" % master_name,
+            )
+            # Example content.split("\r\n")
+            # ['$4', 'name', '$8', 'master01', '$2', 'ip', '$12', '192.168.1.92', '$4', 'port', '$4', '6379']
+            segments = content.split("\r\n")[1::2]
+            for key, value in zip(segments[::2], segments[1::2]):
+                info_dict[key] = value
+            result.append(info_dict)
+
+    return result
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) != 3:
+        print "argument not provided."
+        exit(1)
+    else:
+        cmd = sys.argv[1]
+        arg = sys.argv[2]
+
+        try:
+            content = issue_command(REDIS_SENTINEL_HOST, int(REDIS_SENTINEL_PORT), "INFO")
+        except socket.error as e:
+            print "Socket Error: %s" % e
+            exit(1)
+        except RedisError as e:
+            print "Redis Error: %s" % e
+            exit(1)
+        except Exception as e:
+            print "Unexpected Error: %s" % e
+            exit(1)
+
+        redis_info = parse_redis_info(content)
+
+        if cmd == "info":
+            if not redis_info:
+                print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
+                exit(1)
+
+            if arg in redis_info:
+                print redis_info[arg]
+                exit(0)
+            else:
+                print("Key (%s) cannot be found." % arg)
+                exit(1)
+
+        elif cmd == "master":
+            result = parse_masters_info(redis_info)
+
+            if not result:
+                print "Cannot find any key / value pair from redis `SENTINEL master master_names` command."
+                exit(1)
+
+            if len(result) > 1:
+                print "Multiple master servers are found: %s" % result
+                exit(0)
+
+            if arg in result[0].keys():
+                print(result[0][arg])
+            else:
+                print("Key (%s) cannot be found." % arg)
+                exit(1)
+
+        else:
+            print "Only support master / info command."
+            exit(1)
