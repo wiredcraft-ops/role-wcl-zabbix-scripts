@@ -1,0 +1,98 @@
+import json
+import urlparse
+import requests
+import sys
+
+
+host = ""
+cluster_url = urlparse.urljoin(host, "/pools/default")
+buckets_url = urlparse.urljoin(host, "/pools/default/buckets/")
+
+
+def get_from_url(url, params={}):
+    return json.loads(requests.get(url, params=params).content)
+
+def handle_data_by_type(value, data_type):
+
+    if data_type == "int":
+        return int(value)
+
+    if data_type == "string":
+        return str(value)
+
+    if data_type == "float":
+        return float(value)
+
+    # if data_type is avg, then value should be a list,
+    # and the each element in this list is numeric.
+    # then take average of values in this list.
+    if data_type == "avg":
+        assert type(value) == 'list'
+        return sum(value) / float(len(value))
+
+    # value should be a list of string
+    if data_type == "string_list":
+        assert type(value) == 'list'
+        return [str(item) for item in value]
+
+def main():
+    args = sys.argv[1:]
+
+    if len(args) < 1:
+        print "argument not provided."
+        exit(1)
+
+    if args[0] == "cluster":
+
+        # couchbase['cluster', key, type]
+        keys = args[1].split(".")
+        data_type = args[2]
+
+        # Get wanted data through layers.
+        data = get_from_url(cluster_url)
+        for key in keys:
+            data = data[key]
+
+        print handle_data_by_type(data, data_type)
+
+    elif args[0] == "bucket":
+        # couchbase['bucket', 'names', type]
+        # type here is `string_list`
+        if len(args) == 3 and args[1] == 'names':
+            data = get_from_url(buckets_url)
+            bucket_names = [bucket['name'] for bucket in data]
+            print bucket_names
+            exit(0)
+
+        # couchbase['bucket', name, key, type]
+        name = args[1]
+        keys = args[2].split(".")
+        data_type = args[3]
+
+        bucket_url = urlparse.urljoin(buckets_url, name)
+
+        data = get_from_url(bucket_url)
+        for key in keys:
+            data = data[key]
+
+        print handle_data_by_type(data, data_type)
+
+    elif args[0] == "node":
+        # couchbase['node', hostname, key, type]
+        hostname = args[1]
+        nodes = get_from_url(cluster_url).get("nodes")
+        for node in nodes:
+            if node.get("hostname").split(":")[0] == hostname:
+                data = node
+                break
+        keys = args[2].split(".")
+        for key in keys:
+            data = data[key]
+
+        print handle_data_by_type(data, data_type)
+    else:
+        print "Argument is not either cluster, bucket, node"
+
+
+if __name__ == "__main__":
+    main()
