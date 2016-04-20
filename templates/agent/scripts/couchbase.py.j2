@@ -4,8 +4,26 @@ import requests
 import sys
 
 
-host = ""
-cluster_url = urlparse.urljoin(host, "/pools/default")
+# Usage examples:
+# Cluster:
+
+# python couchbase.py cluster maxBucketCount int
+# python couchbase.py cluster name string
+# python couchbase.py cluster buckets.uri string
+# python couchbase.py cluster storageTotals.hdd.free int
+# python couchbase.py cluster nodes string_list
+
+# Bucket
+
+# python couchbase.py bucket names string_list
+# python couchbase.py bucket <name>  stats.op.samples.ops avg
+
+# Node
+# python couchbase.py node <hostname> interestingStats.couch_views_data_size int
+
+
+host = "http://sbux.local.wiredcraft.com:8091"
+cluster_url = urlparse.urljoin(host, "/pools/default/")
 buckets_url = urlparse.urljoin(host, "/pools/default/buckets/")
 
 
@@ -13,7 +31,6 @@ def get_from_url(url, params={}):
     return json.loads(requests.get(url, params=params).content)
 
 def handle_data_by_type(value, data_type):
-
     if data_type == "int":
         return int(value)
 
@@ -27,13 +44,79 @@ def handle_data_by_type(value, data_type):
     # and the each element in this list is numeric.
     # then take average of values in this list.
     if data_type == "avg":
-        assert type(value) == 'list'
+        assert type(value) == list
         return sum(value) / float(len(value))
 
     # value should be a list of string
     if data_type == "string_list":
-        assert type(value) == 'list'
+        assert type(value) == list
         return [str(item) for item in value]
+
+def get_data_from_keys(data, keys_string):
+    """
+    Get wanted data through layers.
+    """
+    keys = keys_string.split(".")
+    for key in keys:
+        data = data[key]
+    return data
+
+
+def handle_cluster(args):
+    # couchbase['cluster', key, type]
+    data = get_from_url(cluster_url)
+    data_type = args[1]
+    keys_string = args[0]
+
+    result = get_data_from_keys(data, keys_string)
+
+    if keys_string == "nodes":
+        result = [item['hostname'].split(":")[0] for item in result]
+
+    print handle_data_by_type(result, data_type)
+
+
+def handle_bucket(args):
+    # couchbase['bucket', 'names', type]
+    # type here is `string_list`
+    if len(args) == 2 and args[0] == 'names':
+        data = get_from_url(buckets_url)
+        bucket_names = [bucket['name'] for bucket in data]
+        print bucket_names
+        exit(0)
+
+    # couchbase['bucket', name, key, type]
+    name = args[0]
+    data_type = args[2]
+
+    bucket_url = urlparse.urljoin(buckets_url, "%s/" % name)
+
+    # couchbase['bucket', name, 'stats.*', type]
+    keys_string = args[1]
+    if keys_string.startswith("stats"):
+        bucket_stats_url = urlparse.urljoin(bucket_url, "stats?zoom=minute")
+        data = get_from_url(bucket_stats_url)
+        result = get_data_from_keys(data, keys_string.split(".", 1)[1])
+    else:
+        data = get_from_url(bucket_url)
+        result = get_data_from_keys(data, keys_string)
+
+    print handle_data_by_type(result, data_type)
+
+
+def handle_node(args):
+    # couchbase['node', hostname, key, type]
+    hostname = args[0]
+    nodes = get_from_url(cluster_url).get("nodes")
+    data_type = args[2]
+    for node in nodes:
+        if node.get("hostname").split(":")[0] == hostname:
+            data = node
+            break
+    result = get_data_from_keys(data, args[1])
+
+    print handle_data_by_type(result, data_type)
+
 
 def main():
     args = sys.argv[1:]
@@ -42,54 +125,18 @@ def main():
         print "argument not provided."
         exit(1)
 
-    if args[0] == "cluster":
+    # The object_type (first agrument) is either cluster, bucket, or node.
+    object_type = args[0]
+    extra_args = args[1:]
 
-        # couchbase['cluster', key, type]
-        keys = args[1].split(".")
-        data_type = args[2]
+    if object_type == "cluster":
+        handle_cluster(extra_args)
 
-        # Get wanted data through layers.
-        data = get_from_url(cluster_url)
-        for key in keys:
-            data = data[key]
+    elif object_type == "bucket":
+        handle_bucket(extra_args)
 
-        print handle_data_by_type(data, data_type)
-
-    elif args[0] == "bucket":
-        # couchbase['bucket', 'names', type]
-        # type here is `string_list`
-        if len(args) == 3 and args[1] == 'names':
-            data = get_from_url(buckets_url)
-            bucket_names = [bucket['name'] for bucket in data]
-            print bucket_names
-            exit(0)
-
-        # couchbase['bucket', name, key, type]
-        name = args[1]
-        keys = args[2].split(".")
-        data_type = args[3]
-
-        bucket_url = urlparse.urljoin(buckets_url, name)
-
-        data = get_from_url(bucket_url)
-        for key in keys:
-            data = data[key]
-
-        print handle_data_by_type(data, data_type)
-
-    elif args[0] == "node":
-        # couchbase['node', hostname, key, type]
-        hostname = args[1]
-        nodes = get_from_url(cluster_url).get("nodes")
-        for node in nodes:
-            if node.get("hostname").split(":")[0] == hostname:
-                data = node
-                break
-        keys = args[2].split(".")
-        for key in keys:
-            data = data[key]
-
-        print handle_data_by_type(data, data_type)
+    elif object_type == "node":
+        handle_node(extra_args)
     else:
         print "Argument is not either cluster, bucket, node"
 
