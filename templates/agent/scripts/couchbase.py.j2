@@ -30,7 +30,7 @@ buckets_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/buckets/"
 def get_from_url(url, params={}):
     return json.loads(requests.get(url, params=params).content)
 
-def handle_data_by_type(value, data_type):
+def handle_data_by_type(value, data_type, macro=None):
     if data_type == "int":
         return int(value)
 
@@ -50,7 +50,9 @@ def handle_data_by_type(value, data_type):
     # value should be a list of string
     if data_type == "string_list":
         assert type(value) == list
-        return [str(item) for item in value]
+        return json.dumps({
+            "data": [{"{#%s}" % macro : str(item)} for item in value]
+        })
 
 def get_data_from_keys(data, keys_string):
     """
@@ -72,6 +74,8 @@ def handle_cluster(args):
 
     if keys_string == "nodes":
         result = [item['hostname'].split(":")[0] for item in result]
+        print handle_data_by_type(result, data_type, "NODEHOST")
+        exit(0)
 
     print handle_data_by_type(result, data_type)
 
@@ -82,7 +86,7 @@ def handle_bucket(args):
     if len(args) == 2 and args[0] == 'names':
         data = get_from_url(buckets_url)
         bucket_names = [bucket['name'] for bucket in data]
-        print bucket_names
+        print handle_data_by_type(bucket_names, args[1], "BUCKETNAME")
         exit(0)
 
     # couchbase['bucket', name, key, type]
@@ -139,6 +143,7 @@ def main():
         handle_node(extra_args)
     else:
         print "Argument is not either cluster, bucket, node"
+        exit(1)
 
 
 if __name__ == "__main__":
