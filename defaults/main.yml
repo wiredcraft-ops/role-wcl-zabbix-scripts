@@ -46,6 +46,9 @@ zabbix_php_fpm:
     socket: ""
     status_uri: "/status"
 
+zabbix_couchbase:
+    api_enpoint: "http://user:password@host:8091"
+
 install_packages: False
 
 packages_redhat:

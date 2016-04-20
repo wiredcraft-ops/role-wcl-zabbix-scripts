@@ -22,9 +22,9 @@ import sys
 # python couchbase.py node <hostname> interestingStats.couch_views_data_size int
 
 
-host = "http://sbux.local.wiredcraft.com:8091"
-cluster_url = urlparse.urljoin(host, "/pools/default/")
-buckets_url = urlparse.urljoin(host, "/pools/default/buckets/")
+couchbase_api_endpoint = "{{ zabbix_couchbase.api_endpoint }}"
+cluster_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/")
+buckets_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/buckets/")
 
 
 def get_from_url(url, params={}):
