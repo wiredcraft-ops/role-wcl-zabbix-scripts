@@ -47,7 +47,7 @@ zabbix_php_fpm:
     status_uri: "/status"
 
 zabbix_couchbase:
-    api_enpoint: "http://user:password@host:8091"
+    api_endpoint: "http://user:password@host:8091"
 
 install_packages: False
 
