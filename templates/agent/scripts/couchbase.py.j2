@@ -51,7 +51,7 @@ def handle_data_by_type(value, data_type, macro=None):
     if data_type == "string_list":
         assert type(value) == list
         return json.dumps({
-            "data": [{"{#%s}" % macro : str(item)} for item in value]
+            "data": [{"{%s}" % macro : str(item)} for item in value]
         })
 
 def get_data_from_keys(data, keys_string):
@@ -74,7 +74,7 @@ def handle_cluster(args):
 
     if keys_string == "nodes":
         result = [item['hostname'].split(":")[0] for item in result]
-        print handle_data_by_type(result, data_type, "NODEHOST")
+        print handle_data_by_type(result, data_type, "#NODEHOST")
         exit(0)
 
     print handle_data_by_type(result, data_type)
@@ -88,7 +88,7 @@ def handle_bucket(args):
     if len(args) == 2 and args[0] == 'names':
         data = get_from_url(buckets_url)
         bucket_names = [bucket['name'] for bucket in data]
-        print handle_data_by_type(bucket_names, args[1], "BUCKETNAME")
+        print handle_data_by_type(bucket_names, args[1], "#BUCKETNAME")
         exit(0)
 
     # couchbase['bucket', name, key, type]
