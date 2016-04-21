@@ -81,6 +81,8 @@ def handle_cluster(args):
 
 
 def handle_bucket(args):
+    # warning: you can not call your bucket name to "names",
+    # it will conflict with the following condition.
     # couchbase['bucket', 'names', type]
     # type here is `string_list`
     if len(args) == 2 and args[0] == 'names':
@@ -103,7 +105,13 @@ def handle_bucket(args):
         result = get_data_from_keys(data, keys_string.split(".", 1)[1])
     else:
         data = get_from_url(bucket_url)
-        result = get_data_from_keys(data, keys_string)
+        # couchbase['bucket', name, "nodes.hostnames", "string"]
+        if keys_string == "nodes.hostnames":
+            result = [node['hostname'] for node in get_data_from_keys(data, "nodes")]
+            result = ", ".join(result)
+        # couchbase['bucket', name, "*", type]
+        else:
+            result = get_data_from_keys(data, keys_string)
 
     print handle_data_by_type(result, data_type)
 
