@@ -30,14 +30,13 @@
 ########################
 
 import json
-import urlparse
+import os
 import requests
 import sys
+import urlparse
 
 
-
-
-couchbase_api_endpoint = "{{ zabbix_couchbase.api_endpoint }}"
+couchbase_api_endpoint = os.getenv("API_ENDPOINT")
 cluster_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/")
 buckets_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/buckets/")
 
