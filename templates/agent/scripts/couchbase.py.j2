@@ -1,9 +1,16 @@
-import json
-import urlparse
-import requests
-import sys
-
-
+#!/usr/bin/env python
+########################
+# Zabbix couchbase monitoring script
+#
+# Supports:
+#  - nodes, bucket names discovery
+#  - cluster items
+#  - bucket itmes
+#  - node items
+########################
+# ChangeLog:
+#  20160425  Sun Song <sunsongxp@gmail.com> initial creation
+########################
 # Usage examples:
 # Cluster:
 
@@ -20,6 +27,14 @@ import sys
 
 # Node
 # python couchbase.py node <hostname> interestingStats.couch_views_data_size int
+########################
+
+import json
+import urlparse
+import requests
+import sys
+
+
 
 
 couchbase_api_endpoint = "{{ zabbix_couchbase.api_endpoint }}"
