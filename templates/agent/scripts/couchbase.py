@@ -93,7 +93,7 @@ def handle_cluster(args):
     if keys_string == "nodes":
         result = [item['hostname'].split(":")[0] for item in result]
         print handle_data_by_type(result, data_type, "#NODEHOST")
-        exit(0)
+        return
 
     print handle_data_by_type(result, data_type)
 
@@ -107,7 +107,7 @@ def handle_bucket(args):
         data = get_from_url(buckets_url)
         bucket_names = [bucket['name'] for bucket in data]
         print handle_data_by_type(bucket_names, args[1], "#BUCKETNAME")
-        exit(0)
+        return
 
     # couchbase['bucket', name, key, type]
     name = args[0]
@@ -152,8 +152,7 @@ def main():
     args = sys.argv[1:]
 
     if len(args) < 1:
-        print "argument not provided."
-        exit(1)
+        raise Exception("Argument not provided.")
 
     # The object_type (first agrument) is either cluster, bucket, or node.
     object_type = args[0]
@@ -168,8 +167,7 @@ def main():
     elif object_type == "node":
         handle_node(extra_args)
     else:
-        print "Argument is not either cluster, bucket, node"
-        exit(1)
+        raise Exception("Argument is not either cluster, bucket, node")
 
 
 if __name__ == "__main__":
