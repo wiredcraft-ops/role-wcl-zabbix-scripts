@@ -14,8 +14,8 @@
 # Usage examples:
 
 # Discovery
-# python couchbase.py discovery buckets string_list
-# python couchbase.py discovery nodes string_list
+# python couchbase.py discovery buckets
+# python couchbase.py discovery nodes
 
 # Cluster:
 
