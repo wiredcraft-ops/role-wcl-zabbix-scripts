@@ -30,13 +30,20 @@
 ########################
 
 import json
-import os
 import requests
 import sys
 import urlparse
 
 
-couchbase_api_endpoint = os.getenv("API_ENDPOINT")
+# Load configuration file
+conf_string = open("../conf/couchbase.conf").read()
+conf_json = json.loads(conf_string)
+
+couchbase_api_endpoint = conf_json.get("api_endpoint")
+
+if not couchbase_api_endpoint:
+    raise Exception("api_endpoint is not provided in configuration file")
+
 cluster_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/")
 buckets_url = urlparse.urljoin(couchbase_api_endpoint, "/pools/default/buckets/")
 
