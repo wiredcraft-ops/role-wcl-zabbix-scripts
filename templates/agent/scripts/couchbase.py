@@ -24,7 +24,8 @@
 # python couchbase.py cluster storageTotals.hdd.free int
 
 # Bucket:
-# python couchbase.py bucket <name>  stats.op.samples.ops avg
+# python couchbase.py bucket <name> stats.op.samples.ops avg
+# python couchbase.py bucket <name> nodes.hostnames string
 
 # Node:
 # python couchbase.py node <hostname> interestingStats.couch_views_data_size int
@@ -162,7 +163,11 @@ def main():
         )
 
     elif object_type == "bucket":
-        handle_bucket(extra_args)
+        handle_bucket(
+            name=extra_args[0],
+            keys_string=extra_args[1],
+            data_type=extra_args[2],
+        )
 
     elif object_type == "node":
         handle_node(
