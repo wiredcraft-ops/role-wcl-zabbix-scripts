@@ -12,6 +12,11 @@
 #  20160425  Sun Song <sunsongxp@gmail.com> initial creation
 ########################
 # Usage examples:
+
+# Discovery
+# python couchbase.py discovery buckets string_list
+# python couchbase.py discovery nodes string_list
+
 # Cluster:
 
 # python couchbase.py cluster maxBucketCount int
@@ -22,11 +27,11 @@
 
 # Bucket
 
-# python couchbase.py bucket names string_list
 # python couchbase.py bucket <name>  stats.op.samples.ops avg
 
 # Node
 # python couchbase.py node <hostname> interestingStats.couch_views_data_size int
+
 ########################
 
 import json
@@ -90,24 +95,10 @@ def handle_cluster(args):
 
     result = get_data_from_keys(data, keys_string)
 
-    if keys_string == "nodes":
-        result = [item['hostname'].split(":")[0] for item in result]
-        print handle_data_by_type(result, data_type, "#NODEHOST")
-        return
-
     print handle_data_by_type(result, data_type)
 
 
 def handle_bucket(args):
-    # warning: you can not call your bucket name to "names",
-    # it will conflict with the following condition.
-    # couchbase['bucket', 'names', type]
-    # type here is `string_list`
-    if len(args) == 2 and args[0] == 'names':
-        data = get_from_url(buckets_url)
-        bucket_names = [bucket['name'] for bucket in data]
-        print handle_data_by_type(bucket_names, args[1], "#BUCKETNAME")
-        return
 
     # couchbase['bucket', name, key, type]
     name = args[0]
@@ -148,6 +139,27 @@ def handle_node(args):
     print handle_data_by_type(result, data_type)
 
 
+def handle_discovery(args):
+    # couchbase['discovery', key, type]
+    data_type = args[1]
+    keys_string = args[0]
+
+    if keys_string == "nodes":
+        data = get_from_url(cluster_url)
+        result = get_data_from_keys(data, keys_string)
+        nodes = [item['hostname'].split(":")[0] for item in result]
+        print handle_data_by_type(nodes, data_type, "#NODEHOST")
+        return
+
+    if keys_string == "buckets":
+        # couchbase['discovery', 'buckets', type]
+        # type here is `string_list`
+        data = get_from_url(buckets_url)
+        bucket_names = [bucket['name'] for bucket in data]
+        print handle_data_by_type(bucket_names, args[1], "#BUCKETNAME")
+        return
+
+
 def main():
     args = sys.argv[1:]
 
@@ -166,6 +178,9 @@ def main():
 
     elif object_type == "node":
         handle_node(extra_args)
+
+    elif object_type == "discovery":
+        handle_discovery(extra_args)
     else:
         raise Exception("Argument is not either cluster, bucket, node")
 
