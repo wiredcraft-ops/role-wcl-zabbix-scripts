@@ -58,9 +58,6 @@ def handle_data_by_type(value, data_type, macro=None):
     if data_type == "string":
         return str(value)
 
-    if data_type == "float":
-        return float(value)
-
     # if data_type is avg, then value should be a list,
     # and the each element in this list is numeric.
     # then take average of values in this list.
