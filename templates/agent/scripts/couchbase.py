@@ -13,22 +13,20 @@
 ########################
 # Usage examples:
 
-# Discovery
+# Discovery:
 # python couchbase.py discovery buckets
 # python couchbase.py discovery nodes
 
 # Cluster:
-
 # python couchbase.py cluster maxBucketCount int
 # python couchbase.py cluster name string
 # python couchbase.py cluster buckets.uri string
 # python couchbase.py cluster storageTotals.hdd.free int
 
-# Bucket
-
+# Bucket:
 # python couchbase.py bucket <name>  stats.op.samples.ops avg
 
-# Node
+# Node:
 # python couchbase.py node <hostname> interestingStats.couch_views_data_size int
 
 ########################
