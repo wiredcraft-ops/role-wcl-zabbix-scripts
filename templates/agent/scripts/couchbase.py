@@ -176,7 +176,7 @@ def main():
     elif object_type == "discovery":
         handle_discovery(
             keys_string=extra_args[0],
-            data_type=extra_args[1],
+            data_type="string_list",
         )
     else:
         raise Exception("Argument is not either cluster, bucket, node")
