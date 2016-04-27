@@ -33,13 +33,17 @@
 ########################
 
 import json
+import os
 import requests
 import sys
 import urlparse
 
 
 # Load configuration file
-conf_string = open("../conf/couchbase.conf").read()
+
+conf_string = open(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), "../conf/couchbase.conf")
+).read()
 conf_json = json.loads(conf_string)
 
 couchbase_api_endpoint = conf_json.get("api_endpoint")
