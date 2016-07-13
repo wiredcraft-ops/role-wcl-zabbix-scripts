@@ -63,3 +63,8 @@ check_header_config_list: []
 #         url: https://www.google.com.hk
 #         ip: 127.0.0.1
 #         header_key: '^Set-Cookie[\w\W]+'
+
+zabbix_nsq:
+    nsqd_http_port: 4151
+    nsqlookupd_http_port: 4161
+    nsq_host: 127.0.0.1
