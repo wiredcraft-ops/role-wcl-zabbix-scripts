@@ -1,0 +1,3 @@
+UserParameter=nsq.nsqd.discovery[*], python {{ zabbix_prefix_dir }}/scripts/nsq.py nsqd discovery "$1"
+UserParameter=nsq.nsqd[*], python {{ zabbix_prefix_dir  }}/scripts/nsq.py nsqd "$1" "$2" "$3"
+UserParameter=nsq.nsqlookupd[*], python {{ zabbix_prefix_dir  }}/scripts/nsq.py nsqlookupd "$1"
