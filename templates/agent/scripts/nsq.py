@@ -29,6 +29,9 @@
 #
 # List all topics in the whole cluster
 # `python nsq.py nsqlookupd topics`
+#
+# Get attribute of a topic. (Available attributes: backend_depth, depth, message_count, paused)
+# `python nsq.py nsqd topic test backend_depth`
 
 
 import json
@@ -81,6 +84,15 @@ def handle_nsqd(key, extra_keys=[]):
     elif key == "version":
         print nsqd.version
 
+    elif key == "topic":
+        topics = nsqd.get_topics(topic=extra_keys[0])
+        if len(topics) == 1:
+            topic = topics[0]
+        else:
+            raise Exception("Unexpected Error: the topic we get have more than one result returned or there is no such topic.")
+
+        print json.dumps(topic.get(extra_keys[1]))
+
     elif key == "discovery":
         discovery_item = extra_keys[0]
         if discovery_item == "topics":
@@ -89,10 +101,6 @@ def handle_nsqd(key, extra_keys=[]):
             for topic in topics:
                 data.append({
                     "{#TOPICNAME}": topic['topic_name'],
-                    "{#BACKENDDEPTH}": topic['backend_depth'],
-                    "{#DEPTH}": topic['depth'],
-                    "{#MESSAGE_COUNT}": topic['message_count'],
-                    "{#PAUSED}": topic['paused'],
                 })
             print json.dumps({"data": data})
 
@@ -150,9 +158,11 @@ class NSQd():
     def health(self):
         return self.get_stat().get("health")
 
-    @property
-    def topics(self):
-        topics_info = self.get_stat().get("topics")
+    def get_topics(self, topic=None):
+        """
+        Get the info of either a specific topic or all topics.
+        """
+        topics_info = self.get_stat(topic).get("topics")
         return [{
             "topic_name": topic_info.get("topic_name"),
             "backend_depth": topic_info.get("backend_depth"),
