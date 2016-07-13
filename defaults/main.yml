@@ -50,9 +50,11 @@ install_packages: False
 
 packages_redhat:
     - fcgi
+    - python-requests
 
 packages_debian:
     - libfcgi0ldbl
+    - python-requests
 
 check_header_config_list: []
 # Example config list
