@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# {{ ansible_managed }}
 ########################
 # Zabbix nsq monitoring script
 #
@@ -98,9 +99,10 @@ def handle_nsqd(key, extra_keys=[]):
         if discovery_item == "topics":
             topics = nsqd.topics
             data = []
+            key = "%s%s%s" % ("{", "#TOPICNAME", "}")
             for topic in topics:
                 data.append({
-                    "{#TOPICNAME}": topic['topic_name'],
+                    key: topic['topic_name'],
                 })
             print json.dumps({"data": data})
 
