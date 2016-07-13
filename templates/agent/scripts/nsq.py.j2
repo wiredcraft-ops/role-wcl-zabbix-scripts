@@ -97,7 +97,7 @@ def handle_nsqd(key, extra_keys=[]):
     elif key == "discovery":
         discovery_item = extra_keys[0]
         if discovery_item == "topics":
-            topics = nsqd.topics
+            topics = nsqd.get_topics()
             data = []
             key = "%s%s%s" % ("{", "#TOPICNAME", "}")
             for topic in topics:
