@@ -50,9 +50,11 @@ install_packages: False
 
 packages_redhat:
     - fcgi
+    - python-requests
 
 packages_debian:
     - libfcgi0ldbl
+    - python-requests
 
 check_header_config_list: []
 # Example config list
@@ -61,3 +63,8 @@ check_header_config_list: []
 #         url: https://www.google.com.hk
 #         ip: 127.0.0.1
 #         header_key: '^Set-Cookie[\w\W]+'
+
+zabbix_nsq:
+    nsqd_http_port: 4151
+    nsqlookupd_http_port: 4161
+    host: 127.0.0.1
