@@ -21,10 +21,10 @@
 # Discover the topics in this nsq server along with detailed information related to those topics.
 # `python nsq.py nsqd discovery topics`
 #
-# List all nsqlookupd count in the while cluster
+# List all nsqd count in the whole cluster from this nsqlookupd
 # `python nsq.py nsqlookupd count`
 #
-# List all nsqlookupd names in the whole cluster
+# List all nsqd names in the whole cluster from this nsqlookupd
 # `python nsq.py nsqlookupd names`
 #
 # List all topics in the whole cluster
@@ -193,6 +193,9 @@ class NSQLookupd():
 
     @property
     def node_names(self):
+        """
+        Get the names of NSQd nodes registered in this NSQLookupd
+        """
         node_names = []
         nodes_info = self.get_nodes_info()
         if nodes_info:
