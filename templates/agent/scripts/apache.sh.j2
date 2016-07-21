@@ -27,8 +27,9 @@ WGET_BIN="/usr/bin/wget"
 APACHECTL_BIN="{{ zabbix_apache.apachectl }}"
 
 # Include config replacing the defaults.
-if [ -f "../conf/apache.conf" ]; then
-    source ../conf/apache.conf
+CONF=$(readlink -m $0/../../conf/apache.conf)
+if [ -f $CONF ]; then
+    source $CONF
 fi
 
 #
