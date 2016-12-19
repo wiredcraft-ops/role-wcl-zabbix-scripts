@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+UserParameter=couchbase.discovery[*], python {{ zabbix_prefix_dir }}/scripts/couchbase.py discovery "$1"
+UserParameter=couchbase[*], python {{ zabbix_prefix_dir }}/scripts/couchbase.py "$1" "$2" "$3" "$4"
